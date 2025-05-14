@@ -104,30 +104,6 @@ public:
         return output;
     }
 };
-
-class Fretboard
-{
-public:
-    vector<InstrumentString> strings;
-    Fretboard(vector<Note> openNotes, int numberOfFrets)
-    {
-        for (Note openNote : openNotes)
-        {
-            InstrumentString generatedString = InstrumentString(openNote, numberOfFrets);
-            strings.push_back(generatedString);
-        }
-    }
-    string info()
-    {
-        string output = "";
-        for (InstrumentString string : strings)
-        {
-            output += string.info() + "\n";
-        }
-        return output;
-    }
-};
-
 class Scale
 {
 private:
@@ -158,13 +134,79 @@ public:
         return output + "\n";
     }
 };
+class Fretboard
+{
+public:
+    vector<InstrumentString> strings;
+    Fretboard(vector<Note> openNotes, int numberOfFrets)
+    {
+        for (Note openNote : openNotes)
+        {
+            InstrumentString generatedString = InstrumentString(openNote, numberOfFrets);
+            strings.push_back(generatedString);
+        }
+    }
+
+    template <typename T>
+    bool is_member(const std::vector<T> &vec, const T &element)
+    {
+        return std::find(vec.begin(), vec.end(), element) != vec.end();
+    }
+
+    map<string, vector<Fret>> scaleMap(Scale scale)
+    {
+        map<string, vector<Fret>> output;
+        vector<string> scaleAsStringVector;
+        for (Note note : scale.scaleTones)
+        {
+            scaleAsStringVector.push_back(note.noteName);
+        }
+
+        for (InstrumentString instrumentString : strings)
+        {
+            for (Fret fret : instrumentString.frets)
+            {
+                if (is_member(scaleAsStringVector, fret.note.noteName))
+                {
+                    output[instrumentString.frets[0].note.noteName].push_back(fret);
+                }
+            }
+        }
+        return output;
+    }
+    string showScaleMap(map<string, vector<Fret>> scaleMap)
+    {
+        string output = "";
+
+        for (const auto &[key, value] : scaleMap)
+        {
+            output += "\n" + key + " string:";
+            for (Fret fret : scaleMap[key])
+            {
+                output += fret.note.info() + " @fret " + to_string(fret.fretNumber) + ", ";
+            }
+        }
+        return output + "\n";
+    }
+    string info()
+    {
+        string output = "";
+        for (InstrumentString string : strings)
+        {
+            output += string.info() + "\n";
+        }
+        return output;
+    }
+};
 
 int main()
 {
     vector<Note> guitarStrings = {{"E", 2}, {"A", 2}, {"D", 3}, {"G", 3}, {"B", 3}, {"E", 4}};
     Fretboard GuitarFretboard = Fretboard(guitarStrings, 24);
     // cout << GuitarFretboard.info() << endl;
-    cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
+    // cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
     auto cMinorScale = Scale(Note("C", 4), "minor");
-    cout << cMinorScale.info();
+    map<string, vector<Fret>> cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
+    cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
+    return 0;
 }
