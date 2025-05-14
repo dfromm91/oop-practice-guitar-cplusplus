@@ -32,32 +32,6 @@ public:
         return noteName + to_string(octave);
     }
 };
-class MusicCalculator
-{
-
-public:
-    static Note transpose(Note note, int interval, bool accidentalType)
-    {
-        vector<string> chromaticScaleSharps = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
-        vector<string> chromaticScaleFlats = {"A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"};
-        Note transposedNote = note;
-        vector<string> scaleToUse = chromaticScaleFlats;
-        if (!accidentalType)
-        {
-            scaleToUse = chromaticScaleSharps;
-        }
-        int octaveTraversal = interval / 12;
-        auto startIndex = find(scaleToUse.begin(), scaleToUse.end(), note.noteName);
-        int index = INT_MAX;
-        if (startIndex != scaleToUse.end())
-        {
-            index = distance(scaleToUse.begin(), startIndex); // ✅ convert iterator to int
-        }
-        transposedNote.noteName = scaleToUse[(index + interval) % 12];
-        transposedNote.octave += octaveTraversal;
-        return transposedNote;
-    }
-};
 
 class Fret
 {
@@ -77,7 +51,7 @@ public:
         return "fret number: " + to_string(fretNumber) + "\n note: " + note.info() + "\n";
     }
 };
-
+using ScaleMap = map<string, vector<Fret>>;
 class InstrumentString
 {
 public:
@@ -153,9 +127,9 @@ public:
         return std::find(vec.begin(), vec.end(), element) != vec.end();
     }
 
-    map<string, vector<Fret>> scaleMap(Scale scale)
+    ScaleMap scaleMap(Scale scale)
     {
-        map<string, vector<Fret>> output;
+        ScaleMap output;
         vector<string> scaleAsStringVector;
         for (Note note : scale.scaleTones)
         {
@@ -174,7 +148,7 @@ public:
         }
         return output;
     }
-    string showScaleMap(map<string, vector<Fret>> scaleMap)
+    string showScaleMap(ScaleMap scaleMap)
     {
         string output = "";
 
@@ -198,6 +172,32 @@ public:
         return output;
     }
 };
+class MusicCalculator
+{
+
+public:
+    static Note transpose(Note note, int interval, bool accidentalType)
+    {
+        vector<string> chromaticScaleSharps = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
+        vector<string> chromaticScaleFlats = {"A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"};
+        Note transposedNote = note;
+        vector<string> scaleToUse = chromaticScaleFlats;
+        if (!accidentalType)
+        {
+            scaleToUse = chromaticScaleSharps;
+        }
+        int octaveTraversal = interval / 12;
+        auto startIndex = find(scaleToUse.begin(), scaleToUse.end(), note.noteName);
+        int index = INT_MAX;
+        if (startIndex != scaleToUse.end())
+        {
+            index = distance(scaleToUse.begin(), startIndex); // ✅ convert iterator to int
+        }
+        transposedNote.noteName = scaleToUse[(index + interval) % 12];
+        transposedNote.octave += octaveTraversal;
+        return transposedNote;
+    }
+};
 
 int main()
 {
@@ -206,7 +206,8 @@ int main()
     // cout << GuitarFretboard.info() << endl;
     // cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
     auto cMinorScale = Scale(Note("C", 4), "minor");
-    map<string, vector<Fret>> cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
+
+    ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
     cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
     return 0;
 }
