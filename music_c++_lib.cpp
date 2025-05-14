@@ -128,10 +128,43 @@ public:
     }
 };
 
+class Scale
+{
+private:
+    map<string, vector<int>> intervalPatternMap =
+        {
+            {"major", {2, 2, 1, 2, 2, 2}},
+            {"minor", {2, 1, 2, 2, 1, 2}}};
+
+public:
+    vector<Note> scaleTones;
+    Scale(Note startingNote, string scaleType)
+    {
+        scaleTones.push_back(startingNote);
+        Note scaleTone = startingNote;
+        for (int i = 0; i < intervalPatternMap[scaleType].size(); i++)
+        {
+            scaleTone = MusicCalculator::transpose(scaleTone, intervalPatternMap[scaleType][i], true);
+            scaleTones.push_back(scaleTone);
+        }
+    }
+    string info()
+    {
+        string output = "";
+        for (Note tone : scaleTones)
+        {
+            output += tone.info() + ", ";
+        }
+        return output + "\n";
+    }
+};
+
 int main()
 {
     vector<Note> guitarStrings = {{"E", 2}, {"A", 2}, {"D", 3}, {"G", 3}, {"B", 3}, {"E", 4}};
     Fretboard GuitarFretboard = Fretboard(guitarStrings, 24);
     // cout << GuitarFretboard.info() << endl;
-    cout << GuitarFretboard.strings[0].frets[3].note.noteName;
+    cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
+    auto cMinorScale = Scale(Note("C", 4), "minor");
+    cout << cMinorScale.info();
 }
