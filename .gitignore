@@ -2,7 +2,11 @@
 .vscode/
 
 # Ignore executables (e.g., compiled binaries)
+music_c++_lib
 *.out
 *.exe
 *.o
 a.out
+
+# macOS system files
+.DS_Store
