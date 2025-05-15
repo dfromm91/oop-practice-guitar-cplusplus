@@ -53,7 +53,14 @@ public:
         {
             index = distance(scaleToUse.begin(), startIndex); // ✅ convert iterator to int
         }
-        transposedNote.noteName = scaleToUse[(index + interval) % 12];
+        if (index + interval > -1)
+        {
+            transposedNote.noteName = scaleToUse[(index + interval) % 12];
+        }
+        else
+        {
+            transposedNote.noteName = scaleToUse[12 + ((index + interval) % 12)];
+        }
         int indexOfC = -1;
         int indexOfTransposedNote = -1;
         int noteIndex = -1;
@@ -70,11 +77,17 @@ public:
         // Handle octave bump across C boundary
         if (indexOfC > -1 && noteIndex > -1 && indexOfTransposedNote > -1)
         {
-            bool crossesC = (noteIndex < indexOfC && indexOfTransposedNote >= indexOfC);
-            bool wrapsAround = (noteIndex + interval >= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote >= indexOfC);
+            bool crossesC = (noteIndex < indexOfC && indexOfTransposedNote >= indexOfC && interval > -1);
+            bool wrapsAround = (noteIndex + interval >= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote >= indexOfC && interval > -1);
+            bool crossesCNegative = (noteIndex > indexOfC && indexOfTransposedNote <= indexOfC && interval < 0);
+            bool wrapsAroundNegative = (noteIndex + interval <= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote <= indexOfC && interval < 0);
             if (crossesC || wrapsAround)
             {
                 octaveTraversal += 1;
+            }
+            if (crossesCNegative || wrapsAroundNegative)
+            {
+                octaveTraversal -= 1;
             }
         }
         transposedNote.octave += octaveTraversal;
@@ -246,6 +259,6 @@ int main()
     cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
     InstrumentString lowE = InstrumentString(Note("E", 2), 12);
     cout << lowE.info();
-    cout << MusicCalculator::transpose(Note("E", 2), 8, true).info() + "\n";
+    cout << MusicCalculator::transpose(Note("A", 2), -10, false).info() + "\n";
     return 0;
 }
