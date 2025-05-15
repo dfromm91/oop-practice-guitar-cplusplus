@@ -9,7 +9,7 @@ class Note
 public:
     string noteName;
     int octave;
-
+    int scaleDegree = 0;
     Note(string noteName, int octave)
     {
         this->noteName = noteName;
@@ -177,6 +177,7 @@ public:
             {
                 if (is_member(scaleAsStringVector, fret.note.noteName))
                 {
+                    fret.note.scaleDegree = scale.getScaleDegree(fret.note.noteName);
                     output[instrumentString.frets[0].note.noteName].push_back(fret);
                 }
             }
@@ -192,7 +193,7 @@ public:
             output += "\n" + key + " string:";
             for (Fret fret : scaleMap[key])
             {
-                output += fret.note.info() + " @fret " + to_string(fret.fretNumber) + ", ";
+                output += fret.note.info() + "(" + to_string(fret.note.scaleDegree) + ")" + " @fret " + to_string(fret.fretNumber) + ", ";
             }
         }
         return output + "\n";
