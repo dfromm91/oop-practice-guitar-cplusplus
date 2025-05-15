@@ -60,21 +60,21 @@ public:
         for (int i = 0; i < scaleToUse.size(); i++)
         {
             if (scaleToUse[i] == "C")
-            {
                 indexOfC = i;
-            }
-            if (scaleToUse[i] == transposedNote.noteName)
-            {
-                indexOfTransposedNote = i;
-            }
             if (scaleToUse[i] == note.noteName)
-            {
                 noteIndex = i;
-            }
-            if (indexOfC > -1 && indexOfTransposedNote > -1 && noteIndex > -1 && noteIndex < indexOfC && indexOfTransposedNote >= indexOfC)
+            if (scaleToUse[i] == transposedNote.noteName)
+                indexOfTransposedNote = i;
+        }
+
+        // Handle octave bump across C boundary
+        if (indexOfC > -1 && noteIndex > -1 && indexOfTransposedNote > -1)
+        {
+            bool crossesC = (noteIndex < indexOfC && indexOfTransposedNote >= indexOfC);
+            bool wrapsAround = (noteIndex + interval >= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote >= indexOfC);
+            if (crossesC || wrapsAround)
             {
                 octaveTraversal += 1;
-                break;
             }
         }
         transposedNote.octave += octaveTraversal;
@@ -111,7 +111,7 @@ public:
         for (int i = 0; i <= numberOfFrets; i++)
         {
             Note transposedNote = MusicCalculator::transpose(note, i, true);
-            Fret transposedFret = {i, transposedNote};
+            Fret transposedFret = Fret(i, transposedNote);
             frets.push_back(transposedFret);
         }
     }
@@ -164,6 +164,7 @@ public:
                 return i + 1;
             }
         }
+        return -1;
     }
 };
 class Fretboard
@@ -214,7 +215,7 @@ public:
 
         for (InstrumentString instrumentString : strings)
         {
-            output += "\n" + instrumentString.frets[0].note.info() + " string:";
+            output += "\n" + instrumentString.frets[0].note.info() + " string: ";
             for (Fret fret : scaleMap[instrumentString.frets[0].note.info()])
             {
                 output += fret.note.info() + "(" + to_string(fret.note.scaleDegree) + ")" + " @fret " + to_string(fret.fretNumber) + ", ";
@@ -237,13 +238,14 @@ int main()
 {
     vector<Note> guitarStrings = {{"E", 2}, {"A", 2}, {"D", 3}, {"G", 3}, {"B", 3}, {"E", 4}};
     Fretboard GuitarFretboard = Fretboard(guitarStrings, 24);
-    cout << GuitarFretboard.info() << endl;
-    cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
+    // cout << GuitarFretboard.info() << endl;
+    // cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
     auto cMinorScale = Scale(Note("C", 4), "minor");
 
     ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
     cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
-    // InstrumentString lowE = InstrumentString(Note("E", 2), 12);
-    // cout << MusicCalculator::transpose(Note("B", 3), 1, true).info();
+    InstrumentString lowE = InstrumentString(Note("E", 2), 12);
+    cout << lowE.info();
+    cout << MusicCalculator::transpose(Note("E", 2), 8, true).info() + "\n";
     return 0;
 }
