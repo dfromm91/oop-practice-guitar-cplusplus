@@ -59,7 +59,17 @@ public:
         }
         else
         {
-            transposedNote.noteName = scaleToUse[12 + ((index + interval) % 12)];
+            cout << index << " " << interval << (index + interval) % 12;
+            if (((index + interval) % 12) == 0)
+            {
+                cout << "zero exception \n";
+                transposedNote.noteName = scaleToUse[0];
+            }
+            else
+            {
+                cout << "no zero exception \n";
+                transposedNote.noteName = scaleToUse[12 + ((index + interval) % 12)];
+            }
         }
         int indexOfC = -1;
         int indexOfTransposedNote = -1;
@@ -85,7 +95,7 @@ public:
             {
                 octaveTraversal += 1;
             }
-            if (crossesCNegative || wrapsAroundNegative)
+            if ((crossesCNegative || wrapsAroundNegative) && ((index + interval) % 12) != 0)
             {
                 octaveTraversal -= 1;
             }
@@ -259,6 +269,6 @@ int main()
     cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
     InstrumentString lowE = InstrumentString(Note("E", 2), 12);
     cout << lowE.info();
-    cout << MusicCalculator::transpose(Note("A", 2), -10, false).info() + "\n";
+    cout << MusicCalculator::transpose(Note("A", 5), -24, false).info() + "\n";
     return 0;
 }
