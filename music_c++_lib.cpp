@@ -9,7 +9,7 @@ class Note
 public:
     string noteName;
     int octave;
-
+    int scaleDegree = 0;
     Note(string noteName, int octave)
     {
         this->noteName = noteName;
@@ -32,7 +32,32 @@ public:
         return noteName + to_string(octave);
     }
 };
+class MusicCalculator
+{
 
+public:
+    static Note transpose(Note note, int interval, bool accidentalType)
+    {
+        vector<string> chromaticScaleSharps = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
+        vector<string> chromaticScaleFlats = {"A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"};
+        Note transposedNote = note;
+        vector<string> scaleToUse = chromaticScaleFlats;
+        if (!accidentalType)
+        {
+            scaleToUse = chromaticScaleSharps;
+        }
+        int octaveTraversal = interval / 12;
+        auto startIndex = find(scaleToUse.begin(), scaleToUse.end(), note.noteName);
+        int index = INT_MAX;
+        if (startIndex != scaleToUse.end())
+        {
+            index = distance(scaleToUse.begin(), startIndex); // ✅ convert iterator to int
+        }
+        transposedNote.noteName = scaleToUse[(index + interval) % 12];
+        transposedNote.octave += octaveTraversal;
+        return transposedNote;
+    }
+};
 class Fret
 {
 public:
@@ -107,6 +132,16 @@ public:
         }
         return output + "\n";
     }
+    int getScaleDegree(string noteName)
+    {
+        for (int i = 0; i < scaleTones.size(); i++)
+        {
+            if (scaleTones[i].noteName == noteName)
+            {
+                return i + 1;
+            }
+        }
+    }
 };
 class Fretboard
 {
@@ -142,6 +177,7 @@ public:
             {
                 if (is_member(scaleAsStringVector, fret.note.noteName))
                 {
+                    fret.note.scaleDegree = scale.getScaleDegree(fret.note.noteName);
                     output[instrumentString.frets[0].note.noteName].push_back(fret);
                 }
             }
@@ -157,7 +193,7 @@ public:
             output += "\n" + key + " string:";
             for (Fret fret : scaleMap[key])
             {
-                output += fret.note.info() + " @fret " + to_string(fret.fretNumber) + ", ";
+                output += fret.note.info() + "(" + to_string(fret.note.scaleDegree) + ")" + " @fret " + to_string(fret.fretNumber) + ", ";
             }
         }
         return output + "\n";
@@ -170,32 +206,6 @@ public:
             output += string.info() + "\n";
         }
         return output;
-    }
-};
-class MusicCalculator
-{
-
-public:
-    static Note transpose(Note note, int interval, bool accidentalType)
-    {
-        vector<string> chromaticScaleSharps = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
-        vector<string> chromaticScaleFlats = {"A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"};
-        Note transposedNote = note;
-        vector<string> scaleToUse = chromaticScaleFlats;
-        if (!accidentalType)
-        {
-            scaleToUse = chromaticScaleSharps;
-        }
-        int octaveTraversal = interval / 12;
-        auto startIndex = find(scaleToUse.begin(), scaleToUse.end(), note.noteName);
-        int index = INT_MAX;
-        if (startIndex != scaleToUse.end())
-        {
-            index = distance(scaleToUse.begin(), startIndex); // ✅ convert iterator to int
-        }
-        transposedNote.noteName = scaleToUse[(index + interval) % 12];
-        transposedNote.octave += octaveTraversal;
-        return transposedNote;
     }
 };
 
