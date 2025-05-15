@@ -54,6 +54,29 @@ public:
             index = distance(scaleToUse.begin(), startIndex); // ✅ convert iterator to int
         }
         transposedNote.noteName = scaleToUse[(index + interval) % 12];
+        int indexOfC = -1;
+        int indexOfTransposedNote = -1;
+        int noteIndex = -1;
+        for (int i = 0; i < scaleToUse.size(); i++)
+        {
+            if (scaleToUse[i] == "C")
+            {
+                indexOfC = i;
+            }
+            if (scaleToUse[i] == transposedNote.noteName)
+            {
+                indexOfTransposedNote = i;
+            }
+            if (scaleToUse[i] == note.noteName)
+            {
+                noteIndex = i;
+            }
+            if (indexOfC > -1 && indexOfTransposedNote > -1 && noteIndex > -1 && noteIndex < indexOfC && indexOfTransposedNote >= indexOfC)
+            {
+                octaveTraversal += 1;
+                break;
+            }
+        }
         transposedNote.octave += octaveTraversal;
         return transposedNote;
     }
@@ -147,6 +170,7 @@ class Fretboard
 {
 public:
     vector<InstrumentString> strings;
+
     Fretboard(vector<Note> openNotes, int numberOfFrets)
     {
         for (Note openNote : openNotes)
@@ -178,7 +202,7 @@ public:
                 if (is_member(scaleAsStringVector, fret.note.noteName))
                 {
                     fret.note.scaleDegree = scale.getScaleDegree(fret.note.noteName);
-                    output[instrumentString.frets[0].note.noteName].push_back(fret);
+                    output[instrumentString.frets[0].note.info()].push_back(fret);
                 }
             }
         }
@@ -188,10 +212,10 @@ public:
     {
         string output = "";
 
-        for (const auto &[key, value] : scaleMap)
+        for (InstrumentString instrumentString : strings)
         {
-            output += "\n" + key + " string:";
-            for (Fret fret : scaleMap[key])
+            output += "\n" + instrumentString.frets[0].note.info() + " string:";
+            for (Fret fret : scaleMap[instrumentString.frets[0].note.info()])
             {
                 output += fret.note.info() + "(" + to_string(fret.note.scaleDegree) + ")" + " @fret " + to_string(fret.fretNumber) + ", ";
             }
@@ -213,11 +237,13 @@ int main()
 {
     vector<Note> guitarStrings = {{"E", 2}, {"A", 2}, {"D", 3}, {"G", 3}, {"B", 3}, {"E", 4}};
     Fretboard GuitarFretboard = Fretboard(guitarStrings, 24);
-    // cout << GuitarFretboard.info() << endl;
-    // cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
+    cout << GuitarFretboard.info() << endl;
+    cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
     auto cMinorScale = Scale(Note("C", 4), "minor");
 
     ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
     cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
+    // InstrumentString lowE = InstrumentString(Note("E", 2), 12);
+    // cout << MusicCalculator::transpose(Note("B", 3), 1, true).info();
     return 0;
 }
