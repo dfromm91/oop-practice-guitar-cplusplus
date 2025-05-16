@@ -62,12 +62,10 @@ public:
             cout << index << " " << interval << (index + interval) % 12;
             if (((index + interval) % 12) == 0)
             {
-                cout << "zero exception \n";
                 transposedNote.noteName = scaleToUse[0];
             }
             else
             {
-                cout << "no zero exception \n";
                 transposedNote.noteName = scaleToUse[12 + ((index + interval) % 12)];
             }
         }
@@ -89,8 +87,8 @@ public:
         {
             bool crossesC = (noteIndex < indexOfC && indexOfTransposedNote >= indexOfC && interval > -1);
             bool wrapsAround = (noteIndex + interval >= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote >= indexOfC && interval > -1);
-            bool crossesCNegative = (noteIndex > indexOfC && indexOfTransposedNote <= indexOfC && interval < 0);
-            bool wrapsAroundNegative = (noteIndex + interval <= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote <= indexOfC && interval < 0);
+            bool crossesCNegative = (noteIndex > indexOfC && indexOfTransposedNote < indexOfC && interval < 0);
+            bool wrapsAroundNegative = (noteIndex + interval <= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote < indexOfC && interval < 0);
             if (crossesC || wrapsAround)
             {
                 octaveTraversal += 1;
@@ -103,10 +101,32 @@ public:
         transposedNote.octave += octaveTraversal;
         return transposedNote;
     }
-    // int getInterval(Note note1, Note note2)
-    // {
+    static int getInterval(Note note1, Note note2)
+    {
+        bool isSharp = true;
+        if (note1.noteName.size() > 1 && note2.noteName.size() > 1)
+        {
+            if (note2.noteName[1] != note1.noteName[1])
+            {
+                note2 = enharmonicEquivalent(note2);
+                bool isSharp = note2.noteName[1] == '#';
+            }
+        }
+        int stepDirection = -1;
+        if (note2.octave > note1.octave)
+        {
+            stepDirection = 1;
+        }
+        int steps = 0;
+        while (note1.info() != note2.info() && steps > -12 && steps < 12)
+        {
 
-    // }
+            note1 = transpose(note1, stepDirection, isSharp);
+            steps += stepDirection;
+            cout << "note1: " + note1.info() + " note 2: " + note2.info() + "\n";
+        }
+        return steps;
+    }
     static Note enharmonicEquivalent(Note note)
     {
         if (note.noteName.size() == 1)
@@ -296,8 +316,11 @@ int main()
     // InstrumentString lowE = InstrumentString(Note("E", 2), 12);
     // cout << lowE.info();
     // cout << MusicCalculator::transpose(Note("A", 5), -24, false).info() + "\n";
-    Note a = Note("A#", 4);
-    a = MusicCalculator::enharmonicEquivalent(a);
-    cout << a.info();
+    // Note a = Note("A#", 4);
+    // a = MusicCalculator::enharmonicEquivalent(a);
+    // cout << a.info();
+    cout << MusicCalculator::getInterval(Note("D", 4), Note("B", 3));
+    // cout << MusicCalculator::transpose(Note("Db", 4), -2, true).info();
+
     return 0;
 }
