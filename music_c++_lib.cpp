@@ -36,10 +36,10 @@ class MusicCalculator
 {
 
 public:
+    static const inline vector<string> chromaticScaleSharps = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
+    static const inline vector<string> chromaticScaleFlats = {"A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"};
     static Note transpose(Note note, int interval, bool accidentalType)
     {
-        vector<string> chromaticScaleSharps = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
-        vector<string> chromaticScaleFlats = {"A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"};
         Note transposedNote = note;
         vector<string> scaleToUse = chromaticScaleFlats;
         if (!accidentalType)
@@ -102,6 +102,32 @@ public:
         }
         transposedNote.octave += octaveTraversal;
         return transposedNote;
+    }
+    // int getInterval(Note note1, Note note2)
+    // {
+
+    // }
+    static Note enharmonicEquivalent(Note note)
+    {
+        if (note.noteName.size() == 1)
+            return note;
+        bool isSharp = true;
+        if (note.noteName[1] == 'b')
+            isSharp = false;
+        vector<string> scaleToUse = isSharp ? chromaticScaleSharps : chromaticScaleFlats;
+        int indexOfNoteInChromaticScale = -1;
+        for (int i = 0; i < 12; i++)
+        {
+            if (scaleToUse[i] == note.noteName)
+            {
+                indexOfNoteInChromaticScale = i;
+            }
+        }
+        Note output;
+        output.noteName = isSharp ? chromaticScaleFlats[indexOfNoteInChromaticScale] : chromaticScaleSharps[indexOfNoteInChromaticScale];
+        output.octave = note.octave;
+        output.scaleDegree = note.scaleDegree;
+        return output;
     }
 };
 class Fret
@@ -259,16 +285,19 @@ public:
 
 int main()
 {
-    vector<Note> guitarStrings = {{"E", 2}, {"A", 2}, {"D", 3}, {"G", 3}, {"B", 3}, {"E", 4}};
-    Fretboard GuitarFretboard = Fretboard(guitarStrings, 24);
+    // vector<Note> guitarStrings = {{"E", 2}, {"A", 2}, {"D", 3}, {"G", 3}, {"B", 3}, {"E", 4}};
+    // Fretboard GuitarFretboard = Fretboard(guitarStrings, 24);
     // cout << GuitarFretboard.info() << endl;
     // cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
-    auto cMinorScale = Scale(Note("C", 4), "minor");
+    // auto cMinorScale = Scale(Note("C", 4), "minor");
 
-    ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
-    cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
-    InstrumentString lowE = InstrumentString(Note("E", 2), 12);
-    cout << lowE.info();
-    cout << MusicCalculator::transpose(Note("A", 5), -24, false).info() + "\n";
+    // ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
+    // cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
+    // InstrumentString lowE = InstrumentString(Note("E", 2), 12);
+    // cout << lowE.info();
+    // cout << MusicCalculator::transpose(Note("A", 5), -24, false).info() + "\n";
+    Note a = Note("A#", 4);
+    a = MusicCalculator::enharmonicEquivalent(a);
+    cout << a.info();
     return 0;
 }
