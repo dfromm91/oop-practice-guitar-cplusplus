@@ -2,6 +2,7 @@
 #include "mylib.hpp"
 #include <map>
 #include <algorithm>
+#include <cassert>
 using namespace std;
 
 class Note
@@ -59,7 +60,7 @@ public:
         }
         else
         {
-            cout << index << " " << interval << (index + interval) % 12;
+            // cout << index << " " << interval << (index + interval) % 12;
             if (((index + interval) % 12) == 0)
             {
                 transposedNote.noteName = scaleToUse[0];
@@ -87,8 +88,10 @@ public:
         {
             bool crossesC = (noteIndex < indexOfC && indexOfTransposedNote >= indexOfC && interval > -1);
             bool wrapsAround = (noteIndex + interval >= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote >= indexOfC && interval > -1);
-            bool crossesCNegative = (noteIndex > indexOfC && indexOfTransposedNote < indexOfC && interval < 0);
-            bool wrapsAroundNegative = (noteIndex + interval <= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote < indexOfC && interval < 0);
+            bool crossesCNegative = (noteIndex >= indexOfC && indexOfTransposedNote < indexOfC && interval < 0);
+            bool wrapsAroundNegative = (noteIndex + interval <= 0 && indexOfTransposedNote < indexOfC && interval < 0);
+
+            // cout << crossesC << wrapsAround << crossesCNegative << wrapsAroundNegative;
             if (crossesC || wrapsAround)
             {
                 octaveTraversal += 1;
@@ -140,7 +143,7 @@ public:
             }
         }
         int steps = 0;
-        while (note1.info() != note2.info() && steps > -12 && steps < 12)
+        while (note1.info() != note2.info() /* && steps > -15 && steps < 15 */)
         {
 
             note1 = transpose(note1, stepDirection, !isSharp);
@@ -325,6 +328,37 @@ public:
     }
 };
 
+void testIntervalCalc()
+{
+    cout << MusicCalculator::getInterval(Note("C#", 4), Note("C", 3)) << endl;
+    cout << MusicCalculator::transpose(Note("Db", 4), -2, true).info() << endl;
+
+    assert(MusicCalculator::getInterval(Note("C", 4), Note("C", 4)) == 0);
+    assert(MusicCalculator::getInterval(Note("C", 4), Note("C", 2)) == -24);
+    assert(MusicCalculator::getInterval(Note("C", 2), Note("C", 4)) == 24);
+
+    // Downward intervals
+    assert(MusicCalculator::getInterval(Note("D", 5), Note("C", 3)) == -26);
+    assert(MusicCalculator::getInterval(Note("C#", 4), Note("C", 3)) == -13);
+    assert(MusicCalculator::getInterval(Note("F", 5), Note("E", 3)) == -25);
+
+    assert(MusicCalculator::getInterval(Note("E", 4), Note("C#", 4)) == -3);
+    assert(MusicCalculator::getInterval(Note("B", 4), Note("A", 4)) == -2);
+
+    // // Upward intervals
+    assert(MusicCalculator::getInterval(Note("C", 3), Note("C#", 5)) == 25);
+    assert(MusicCalculator::getInterval(Note("C", 3), Note("D", 5)) == 26);
+    assert(MusicCalculator::getInterval(Note("D", 3), Note("C", 4)) == 10);
+    assert(MusicCalculator::getInterval(Note("C#", 4), Note("E", 4)) == 3);
+    assert(MusicCalculator::getInterval(Note("A", 4), Note("B", 4)) == 2);
+
+    // // Sharps/flats equivalence (if your Note class normalizes them)
+    assert(MusicCalculator::getInterval(Note("Db", 4), Note("D", 4)) == 1);
+    // assert(MusicCalculator::getInterval(Note("B", 3), Note("Cb", 4)) == 1);
+
+    cout << "All test cases passed!" << endl;
+}
+
 int main()
 {
     // vector<Note> guitarStrings = {{"E", 2}, {"A", 2}, {"D", 3}, {"G", 3}, {"B", 3}, {"E", 4}};
@@ -332,17 +366,15 @@ int main()
     // cout << GuitarFretboard.info() << endl;
     // cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
     // auto cMinorScale = Scale(Note("C", 4), "minor");
-
     // ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
     // cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
     // InstrumentString lowE = InstrumentString(Note("E", 2), 12);
     // cout << lowE.info();
-    // cout << MusicCalculator::transpose(Note("A", 5), -24, false).info() + "\n";
+    // cout << MusicCalculator::transpose(Note("D", 3), -1, false).info() + "\n";
+    /* outputs A#2 instead of A#3 */
     // Note a = Note("A#", 4);
     // a = MusicCalculator::enharmonicEquivalent(a);
     // cout << a.info();
-    cout << MusicCalculator::getInterval(Note("Gb", 3), Note("G#", 3));
-    // cout << MusicCalculator::transpose(Note("Db", 4), -2, true).info();
 
     return 0;
 }
