@@ -327,6 +327,65 @@ public:
         return output;
     }
 };
+class Chord
+{
+private:
+    map<string, vector<int>> quality =
+        {{"major", {4, 7}},
+         {"minor", {3, 7}}};
+
+public:
+    vector<Note> notes;
+    Chord(Note note, string chordType)
+    {
+        bool isFlat = true;
+        if (note.noteName.size() > 1 && note.noteName[1] == '#')
+        {
+            isFlat = false;
+        }
+        notes.push_back(note);
+        for (int interval : quality[chordType])
+        {
+            notes.push_back(MusicCalculator::transpose(note, interval, isFlat));
+        }
+    }
+    Chord(Note note, string chordType, int inversionType)
+    {
+        bool isFlat = true;
+        if (note.noteName.size() > 1 && note.noteName[1] == '#')
+        {
+            isFlat = false;
+        }
+        notes.push_back(note);
+        for (int interval : quality[chordType])
+        {
+            notes.push_back(MusicCalculator::transpose(note, interval, isFlat));
+        }
+        Note root = notes[0];
+        Note third = notes[1];
+        Note fifth = notes[2];
+        if (inversionType == 1)
+        {
+            third.octave -= 1;
+            fifth.octave -= 1;
+            notes = {third, fifth, root};
+        }
+        if (inversionType == 2)
+        {
+            fifth.octave -= 1;
+            notes = {fifth, root, third};
+        }
+    }
+    string info()
+    {
+        string output = "";
+        for (Note note : notes)
+        {
+            output += note.info() + ", ";
+        }
+        return output + "\n";
+    }
+};
 
 void testIntervalCalc()
 {
@@ -375,6 +434,7 @@ int main()
     // Note a = Note("A#", 4);
     // a = MusicCalculator::enharmonicEquivalent(a);
     // cout << a.info();
-
+    Chord cMinorChord = Chord(Note("C", 4), "major", 2);
+    cout << cMinorChord.info() << endl;
     return 0;
 }
