@@ -230,8 +230,10 @@ private:
 
 public:
     vector<Note> scaleTones;
+    string type;
     Scale(Note startingNote, string scaleType)
     {
+        type = scaleType;
         scaleTones.push_back(startingNote);
         Note scaleTone = startingNote;
         for (int i = 0; i < intervalPatternMap[scaleType].size(); i++)
@@ -376,6 +378,10 @@ public:
             notes = {fifth, root, third};
         }
     }
+    Chord(vector<Note> notes)
+    {
+        this->notes = notes;
+    }
     string info()
     {
         string output = "";
@@ -386,37 +392,30 @@ public:
         return output + "\n";
     }
 };
-
-void testIntervalCalc()
+class ChordProgression
 {
-    cout << MusicCalculator::getInterval(Note("C#", 4), Note("C", 3)) << endl;
-    cout << MusicCalculator::transpose(Note("Db", 4), -2, true).info() << endl;
-
-    assert(MusicCalculator::getInterval(Note("C", 4), Note("C", 4)) == 0);
-    assert(MusicCalculator::getInterval(Note("C", 4), Note("C", 2)) == -24);
-    assert(MusicCalculator::getInterval(Note("C", 2), Note("C", 4)) == 24);
-
-    // Downward intervals
-    assert(MusicCalculator::getInterval(Note("D", 5), Note("C", 3)) == -26);
-    assert(MusicCalculator::getInterval(Note("C#", 4), Note("C", 3)) == -13);
-    assert(MusicCalculator::getInterval(Note("F", 5), Note("E", 3)) == -25);
-
-    assert(MusicCalculator::getInterval(Note("E", 4), Note("C#", 4)) == -3);
-    assert(MusicCalculator::getInterval(Note("B", 4), Note("A", 4)) == -2);
-
-    // // Upward intervals
-    assert(MusicCalculator::getInterval(Note("C", 3), Note("C#", 5)) == 25);
-    assert(MusicCalculator::getInterval(Note("C", 3), Note("D", 5)) == 26);
-    assert(MusicCalculator::getInterval(Note("D", 3), Note("C", 4)) == 10);
-    assert(MusicCalculator::getInterval(Note("C#", 4), Note("E", 4)) == 3);
-    assert(MusicCalculator::getInterval(Note("A", 4), Note("B", 4)) == 2);
-
-    // // Sharps/flats equivalence (if your Note class normalizes them)
-    assert(MusicCalculator::getInterval(Note("Db", 4), Note("D", 4)) == 1);
-    // assert(MusicCalculator::getInterval(Note("B", 3), Note("Cb", 4)) == 1);
-
-    cout << "All test cases passed!" << endl;
-}
+public:
+    vector<Chord> chords;
+    ChordProgression(Scale scale, vector<int> chordNumber)
+    {
+        for (int chord : chordNumber)
+        {
+            Note root = scale.scaleTones[(chord - 1) % scale.scaleTones.size()];
+            Note third = scale.scaleTones[(chord + 1) % scale.scaleTones.size()];
+            Note fifth = scale.scaleTones[(chord + 3) % scale.scaleTones.size()];
+            chords.push_back(Chord({root, third, fifth}));
+        }
+    }
+    string info()
+    {
+        string output = "";
+        for (Chord chord : chords)
+        {
+            output += chord.info();
+        }
+        return output += "\n";
+    }
+};
 
 int main()
 {
@@ -424,17 +423,17 @@ int main()
     // Fretboard GuitarFretboard = Fretboard(guitarStrings, 24);
     // cout << GuitarFretboard.info() << endl;
     // cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
-    // auto cMinorScale = Scale(Note("C", 4), "minor");
+    auto cMinorScale = Scale(Note("C", 4), "minor");
     // ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
     // cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
     // InstrumentString lowE = InstrumentString(Note("E", 2), 12);
     // cout << lowE.info();
     // cout << MusicCalculator::transpose(Note("D", 3), -1, false).info() + "\n";
-    /* outputs A#2 instead of A#3 */
     // Note a = Note("A#", 4);
     // a = MusicCalculator::enharmonicEquivalent(a);
     // cout << a.info();
-    Chord cMinorChord = Chord(Note("C", 4), "major", 2);
-    cout << cMinorChord.info() << endl;
+    // Chord cMinorChord = Chord(Note("C", 4), "major");
+    // cout << cMinorChord.info() << endl;
+    cout << ChordProgression(cMinorScale, {1, 4, 5}).info();
     return 0;
 }
