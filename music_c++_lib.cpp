@@ -2,6 +2,7 @@
 #include "mylib.hpp"
 #include <map>
 #include <algorithm>
+#include <cassert>
 using namespace std;
 
 class Note
@@ -36,10 +37,10 @@ class MusicCalculator
 {
 
 public:
+    static const inline vector<string> chromaticScaleSharps = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
+    static const inline vector<string> chromaticScaleFlats = {"A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"};
     static Note transpose(Note note, int interval, bool accidentalType)
     {
-        vector<string> chromaticScaleSharps = {"A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"};
-        vector<string> chromaticScaleFlats = {"A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"};
         Note transposedNote = note;
         vector<string> scaleToUse = chromaticScaleFlats;
         if (!accidentalType)
@@ -53,9 +54,125 @@ public:
         {
             index = distance(scaleToUse.begin(), startIndex); // ✅ convert iterator to int
         }
-        transposedNote.noteName = scaleToUse[(index + interval) % 12];
+        if (index + interval > -1)
+        {
+            transposedNote.noteName = scaleToUse[(index + interval) % 12];
+        }
+        else
+        {
+            // cout << index << " " << interval << (index + interval) % 12;
+            if (((index + interval) % 12) == 0)
+            {
+                transposedNote.noteName = scaleToUse[0];
+            }
+            else
+            {
+                transposedNote.noteName = scaleToUse[12 + ((index + interval) % 12)];
+            }
+        }
+        int indexOfC = -1;
+        int indexOfTransposedNote = -1;
+        int noteIndex = -1;
+        for (int i = 0; i < scaleToUse.size(); i++)
+        {
+            if (scaleToUse[i] == "C")
+                indexOfC = i;
+            if (scaleToUse[i] == note.noteName)
+                noteIndex = i;
+            if (scaleToUse[i] == transposedNote.noteName)
+                indexOfTransposedNote = i;
+        }
+
+        // Handle octave bump across C boundary
+        if (indexOfC > -1 && noteIndex > -1 && indexOfTransposedNote > -1)
+        {
+            bool crossesC = (noteIndex < indexOfC && indexOfTransposedNote >= indexOfC && interval > -1);
+            bool wrapsAround = (noteIndex + interval >= static_cast<int>(scaleToUse.size()) && indexOfTransposedNote >= indexOfC && interval > -1);
+            bool crossesCNegative = (noteIndex >= indexOfC && indexOfTransposedNote < indexOfC && interval < 0);
+            bool wrapsAroundNegative = (noteIndex + interval <= 0 && indexOfTransposedNote < indexOfC && interval < 0);
+
+            // cout << crossesC << wrapsAround << crossesCNegative << wrapsAroundNegative;
+            if (crossesC || wrapsAround)
+            {
+                octaveTraversal += 1;
+            }
+            if ((crossesCNegative || wrapsAroundNegative) && ((index + interval) % 12) != 0)
+            {
+                octaveTraversal -= 1;
+            }
+        }
         transposedNote.octave += octaveTraversal;
         return transposedNote;
+    }
+    static int getInterval(Note note1, Note note2)
+    {
+        bool isSharp = true;
+        if (note1.noteName.size() > 1 && note1.noteName[1] == 'b')
+        {
+            isSharp = false;
+        }
+        if (note1.noteName.size() > 1 && note2.noteName.size() > 1)
+        {
+            if (note2.noteName[1] != note1.noteName[1])
+            {
+                note2 = enharmonicEquivalent(note2);
+                bool isSharp = note2.noteName[1] == '#';
+            }
+        }
+        int stepDirection = -1;
+        if (note2.octave > note1.octave)
+        {
+            stepDirection = 1;
+        }
+
+        if (note2.octave == note1.octave)
+        {
+            int index1 = -1;
+            int index2 = -1;
+            auto scaleToUse = isSharp ? chromaticScaleSharps : chromaticScaleFlats;
+            for (int i = 0; i < 12; i++)
+            {
+                if (scaleToUse[i] == note1.noteName)
+                    index1 = i;
+                if (scaleToUse[i] == note2.noteName)
+                    index2 = i;
+            }
+            if (index1 < index2)
+            {
+                stepDirection = 1;
+            }
+        }
+        int steps = 0;
+        while (note1.info() != note2.info() /* && steps > -15 && steps < 15 */)
+        {
+
+            note1 = transpose(note1, stepDirection, !isSharp);
+            steps += stepDirection;
+            cout << "note1: " + note1.info() + " note 2: " + note2.info() + "\n";
+        }
+        return steps;
+    }
+    static Note enharmonicEquivalent(Note note)
+    {
+        if (note.noteName.size() == 1)
+            return note;
+        bool isSharp = true;
+        if (note.noteName[1] == 'b')
+            isSharp = false;
+        vector<string> scaleToUse = isSharp ? chromaticScaleSharps : chromaticScaleFlats;
+        int indexOfNoteInChromaticScale = -1;
+        for (int i = 0; i < 12; i++)
+        {
+            if (scaleToUse[i] == note.noteName)
+            {
+                indexOfNoteInChromaticScale = i;
+            }
+        }
+        Note output;
+        output.noteName = isSharp ? chromaticScaleFlats[indexOfNoteInChromaticScale] : chromaticScaleSharps[indexOfNoteInChromaticScale];
+        output.octave = note.octave;
+        output.scaleDegree = note.scaleDegree;
+        return output;
     }
 };
 class Fret
@@ -88,7 +205,7 @@ public:
         for (int i = 0; i <= numberOfFrets; i++)
         {
             Note transposedNote = MusicCalculator::transpose(note, i, true);
-            Fret transposedFret = {i, transposedNote};
+            Fret transposedFret = Fret(i, transposedNote);
             frets.push_back(transposedFret);
         }
     }
@@ -141,12 +258,14 @@ public:
                 return i + 1;
             }
         }
+        return -1;
     }
 };
 class Fretboard
 {
 public:
     vector<InstrumentString> strings;
+
     Fretboard(vector<Note> openNotes, int numberOfFrets)
     {
         for (Note openNote : openNotes)
@@ -178,7 +297,7 @@ public:
                 if (is_member(scaleAsStringVector, fret.note.noteName))
                 {
                     fret.note.scaleDegree = scale.getScaleDegree(fret.note.noteName);
-                    output[instrumentString.frets[0].note.noteName].push_back(fret);
+                    output[instrumentString.frets[0].note.info()].push_back(fret);
                 }
             }
         }
@@ -188,10 +307,10 @@ public:
     {
         string output = "";
 
-        for (const auto &[key, value] : scaleMap)
+        for (InstrumentString instrumentString : strings)
         {
-            output += "\n" + key + " string:";
-            for (Fret fret : scaleMap[key])
+            output += "\n" + instrumentString.frets[0].note.info() + " string: ";
+            for (Fret fret : scaleMap[instrumentString.frets[0].note.info()])
             {
                 output += fret.note.info() + "(" + to_string(fret.note.scaleDegree) + ")" + " @fret " + to_string(fret.fretNumber) + ", ";
             }
@@ -209,15 +328,53 @@ public:
     }
 };
 
+void testIntervalCalc()
+{
+    cout << MusicCalculator::getInterval(Note("C#", 4), Note("C", 3)) << endl;
+    cout << MusicCalculator::transpose(Note("Db", 4), -2, true).info() << endl;
+
+    assert(MusicCalculator::getInterval(Note("C", 4), Note("C", 4)) == 0);
+    assert(MusicCalculator::getInterval(Note("C", 4), Note("C", 2)) == -24);
+    assert(MusicCalculator::getInterval(Note("C", 2), Note("C", 4)) == 24);
+
+    // Downward intervals
+    assert(MusicCalculator::getInterval(Note("D", 5), Note("C", 3)) == -26);
+    assert(MusicCalculator::getInterval(Note("C#", 4), Note("C", 3)) == -13);
+    assert(MusicCalculator::getInterval(Note("F", 5), Note("E", 3)) == -25);
+
+    assert(MusicCalculator::getInterval(Note("E", 4), Note("C#", 4)) == -3);
+    assert(MusicCalculator::getInterval(Note("B", 4), Note("A", 4)) == -2);
+
+    // // Upward intervals
+    assert(MusicCalculator::getInterval(Note("C", 3), Note("C#", 5)) == 25);
+    assert(MusicCalculator::getInterval(Note("C", 3), Note("D", 5)) == 26);
+    assert(MusicCalculator::getInterval(Note("D", 3), Note("C", 4)) == 10);
+    assert(MusicCalculator::getInterval(Note("C#", 4), Note("E", 4)) == 3);
+    assert(MusicCalculator::getInterval(Note("A", 4), Note("B", 4)) == 2);
+
+    // // Sharps/flats equivalence (if your Note class normalizes them)
+    assert(MusicCalculator::getInterval(Note("Db", 4), Note("D", 4)) == 1);
+    // assert(MusicCalculator::getInterval(Note("B", 3), Note("Cb", 4)) == 1);
+
+    cout << "All test cases passed!" << endl;
+}
+
 int main()
 {
-    vector<Note> guitarStrings = {{"E", 2}, {"A", 2}, {"D", 3}, {"G", 3}, {"B", 3}, {"E", 4}};
-    Fretboard GuitarFretboard = Fretboard(guitarStrings, 24);
+    // vector<Note> guitarStrings = {{"E", 2}, {"A", 2}, {"D", 3}, {"G", 3}, {"B", 3}, {"E", 4}};
+    // Fretboard GuitarFretboard = Fretboard(guitarStrings, 24);
     // cout << GuitarFretboard.info() << endl;
     // cout << GuitarFretboard.strings[0].frets[3].note.noteName + "\n";
-    auto cMinorScale = Scale(Note("C", 4), "minor");
+    // auto cMinorScale = Scale(Note("C", 4), "minor");
+    // ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
+    // cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
+    // InstrumentString lowE = InstrumentString(Note("E", 2), 12);
+    // cout << lowE.info();
+    // cout << MusicCalculator::transpose(Note("D", 3), -1, false).info() + "\n";
+    /* outputs A#2 instead of A#3 */
+    // Note a = Note("A#", 4);
+    // a = MusicCalculator::enharmonicEquivalent(a);
+    // cout << a.info();
 
-    ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
-    cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
     return 0;
 }
