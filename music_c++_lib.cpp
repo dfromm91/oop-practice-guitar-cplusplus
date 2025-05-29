@@ -174,6 +174,21 @@ public:
         output.scaleDegree = note.scaleDegree;
         return output;
     }
+    // static vector<Chord> getChordsInScale(Scale scale)
+    // {
+    //     map<int, string> scaleChordMap;
+    //     scaleChordMap = {{1, "minor"}, {2, "diminished"}, {3, "major"}, {4, "minor"}, {5, "minor"}, {6, "major"}, {7, "major"}};
+    //     vector<Chord> result;
+    //     string scaleType = scale.type;
+    //     if (scaleType == "minor")
+    //     {
+    //         for (int i = 0; i < scale.scaleTones.size(); i++)
+    //         {
+    //             result.push_back(Chord(scale.scaleTones[i], scaleChordMap[i]));
+    //         }
+    //     }
+    //     return result;
+    // }
 };
 class Fret
 {
@@ -338,8 +353,10 @@ private:
 
 public:
     vector<Note> notes;
+    string chordQuality;
     Chord(Note note, string chordType)
     {
+        chordQuality = chordType;
         bool isFlat = true;
         if (note.noteName.size() > 1 && note.noteName[1] == '#')
         {
@@ -353,6 +370,7 @@ public:
     }
     Chord(Note note, string chordType, int inversionType)
     {
+        chordQuality = chordType;
         bool isFlat = true;
         if (note.noteName.size() > 1 && note.noteName[1] == '#')
         {
@@ -406,6 +424,10 @@ public:
             chords.push_back(Chord({root, third, fifth}));
         }
     }
+    ChordProgression(vector<Chord> chords)
+    {
+        this->chords = chords;
+    }
     string info()
     {
         string output = "";
@@ -426,14 +448,16 @@ int main()
     auto cMinorScale = Scale(Note("C", 4), "minor");
     // ScaleMap cMinorScaleMap = GuitarFretboard.scaleMap(cMinorScale);
     // cout << GuitarFretboard.showScaleMap(cMinorScaleMap);
-    // InstrumentString lowE = InstrumentString(Note("E", 2), 12);
-    // cout << lowE.info();
-    // cout << MusicCalculator::transpose(Note("D", 3), -1, false).info() + "\n";
-    // Note a = Note("A#", 4);
-    // a = MusicCalculator::enharmonicEquivalent(a);
-    // cout << a.info();
+    InstrumentString lowE = InstrumentString(Note("E", 2), 12);
+    cout << lowE.info();
+    cout << MusicCalculator::transpose(Note("D", 3), -1, false).info() + "\n";
+    Note a = Note("A#", 4);
+    a = MusicCalculator::enharmonicEquivalent(a);
+    cout << a.info();
     // Chord cMinorChord = Chord(Note("C", 4), "major");
     // cout << cMinorChord.info() << endl;
-    cout << ChordProgression(cMinorScale, {1, 4, 5}).info();
+    // ChordProgression cNaturalMinorChords = ChordProgression(MusicCalculator::getChordsInScale(cMinorScale));
+    // cout << cNaturalMinorChords.info();
+    // cout << ChordProgression(cMinorScale, {1, 4, 5}).info();
     return 0;
 }
